@@ -43,6 +43,25 @@ describe('parseMrUrl', () => {
     })
   })
 
+  it('treats a pull URL on the configured GitHub host as GitHub', () => {
+    const saved = process.env.GITHUB_SERVER_URL
+    process.env.GITHUB_SERVER_URL = 'https://github.example.com'
+    try {
+      expect(parseMrUrl('https://github.example.com/team/repo/pull/7')).toEqual({
+        type: 'github', owner: 'team', repo: 'repo', number: '7'
+      })
+      // github.com stays recognised alongside the configured host
+      expect(parseMrUrl('https://github.com/openshift/docs/pull/123').type).toBe('github')
+    } finally {
+      if (saved === undefined) delete process.env.GITHUB_SERVER_URL
+      else process.env.GITHUB_SERVER_URL = saved
+    }
+  })
+
+  it('does not treat a pull URL on an unknown host as GitHub', () => {
+    expect(parseMrUrl('https://forge.example.com/team/repo/pull/7')).toBeNull()
+  })
+
   it('returns null for unrecognized URL', () => {
     expect(parseMrUrl('https://example.com/something')).toBeNull()
   })

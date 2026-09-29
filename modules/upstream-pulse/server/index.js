@@ -146,7 +146,8 @@ async function fetchPytorchAccess() {
   const token = _moduleSecrets && _moduleSecrets.GITLAB_TOKEN;
   if (!token) return null;
 
-  const url = `https://gitlab.com/api/v4/projects/${getGitlabProjectId()}/repository/files/${GITLAB_DATA_FILE_PATH}/raw?ref=main`;
+  const gitlabBaseUrl = (process.env.GITLAB_BASE_URL || 'https://gitlab.com').replace(/\/+$/, '');
+  const url = `${gitlabBaseUrl}/api/v4/projects/${getGitlabProjectId()}/repository/files/${GITLAB_DATA_FILE_PATH}/raw?ref=main`;
   const resp = await fetch(url, {
     signal: AbortSignal.timeout(10000),
     headers: { 'PRIVATE-TOKEN': token, 'Accept': 'application/json' },

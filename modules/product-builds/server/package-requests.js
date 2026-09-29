@@ -36,7 +36,7 @@ const DEFAULT_TARGET_VERSION_FIELD = 'customfield_10855';
 // private projects the token cannot see, so a 404 here means the token owner
 // is not a member rather than a wrong path.
 const PACKAGE_ONBOARDING_PROJECT = '78041351';
-const PACKAGE_ONBOARDING_BASE_URL = 'https://gitlab.com';
+const PACKAGE_ONBOARDING_BASE_URL = process.env.GITLAB_BASE_URL || 'https://gitlab.com';
 
 const JIRA_KEY_RE = /^[A-Z][A-Z0-9]+-\d+$/;
 // Jira accounts are keyed by @redhat.com. The OAuth proxy may present the
@@ -566,7 +566,8 @@ async function checkProductionIndexes(packageName, opts = {}) {
  * GitLab project that receives the onboarding pipeline. Defaults to the
  * numeric id of redhat/rhel-ai/core/package-onboarding; an explicit
  * PACKAGE_ONBOARDING_GITLAB_PROJECT may be a numeric id or a namespace path,
- * which is URL-encoded for the API.
+ * which is URL-encoded for the API. PACKAGE_ONBOARDING_GITLAB_BASE_URL names
+ * the instance; it falls back to GITLAB_BASE_URL, then gitlab.com.
  */
 function getGitLabConfig(secrets) {
   const raw = secrets && secrets.PACKAGE_ONBOARDING_GITLAB_PROJECT;
@@ -574,8 +575,11 @@ function getGitLabConfig(secrets) {
   const gitlabProject = !value
     ? PACKAGE_ONBOARDING_PROJECT
     : (/^\d+$/.test(value) ? value : encodeURIComponent(decodeURIComponent(value)));
+  const configuredBase = secrets && typeof secrets.PACKAGE_ONBOARDING_GITLAB_BASE_URL === 'string'
+    ? secrets.PACKAGE_ONBOARDING_GITLAB_BASE_URL.trim().replace(/\/+$/, '')
+    : '';
   return {
-    gitlabBaseUrl: PACKAGE_ONBOARDING_BASE_URL,
+    gitlabBaseUrl: configuredBase || PACKAGE_ONBOARDING_BASE_URL,
     gitlabProject
   };
 }

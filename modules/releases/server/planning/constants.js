@@ -1,4 +1,5 @@
-const JIRA_BROWSE_URL = 'https://redhat.atlassian.net/browse'
+// Browse links follow the configured Jira host, as the API calls do.
+const JIRA_BROWSE_URL = (process.env.JIRA_HOST || 'https://redhat.atlassian.net').replace(/\/+$/, '') + '/browse'
 
 const CLOSED_STATUSES = ['Closed', 'Done', 'Resolved', 'Cancelled']
 const TERMINAL_STATUSES = ['Review', 'Pending Release']

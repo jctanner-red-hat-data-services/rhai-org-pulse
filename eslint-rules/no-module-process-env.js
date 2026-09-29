@@ -15,6 +15,9 @@ const ALLOWED = new Set([
   'JIRA_HOST',
   'JIRA_STORY_POINTS_FIELD',
   'GITLAB_BASE_URL',
+  // GitHub host (enterprise install or emulator); the core clients read the same names
+  'GITHUB_API_URL',
+  'GITHUB_SERVER_URL',
   'PROXY_AUTH_SECRET',
   // Same domain rewrite used by platform role matching (core role-store)
   'AUTH_EMAIL_DOMAIN',

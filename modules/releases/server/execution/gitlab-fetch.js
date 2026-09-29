@@ -24,7 +24,7 @@ const DATA_PREFIX = 'releases/execution';
  */
 async function fetchArtifacts(storage, config, token, jira) {
   const {
-    gitlabBaseUrl = 'https://gitlab.com',
+    gitlabBaseUrl = process.env.GITLAB_BASE_URL || 'https://gitlab.com',
     projectPath,
     jobName = 'fetch-traffic',
     branch = 'main',

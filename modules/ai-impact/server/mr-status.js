@@ -1,15 +1,33 @@
 let _fetch = globalThis.fetch;
 
+// The GitHub these URLs and API calls belong to. github.com unless the
+// platform is pointed elsewhere (an enterprise install or an emulator), the
+// same variables the core platform's GitHub clients read.
+const GITHUB_API_URL_DEFAULT = 'https://api.github.com';
+
+function githubApiUrl() {
+  return ((process.env.GITHUB_API_URL || '').trim() || GITHUB_API_URL_DEFAULT).replace(/\/+$/, '');
+}
+
+function githubHosts() {
+  const hosts = new Set(['github.com']);
+  const configured = (process.env.GITHUB_SERVER_URL || '').trim();
+  if (configured) {
+    try { hosts.add(new URL(configured).host); } catch { /* not a URL: ignore */ }
+  }
+  return hosts;
+}
+
 const GITLAB_MR_RE = /^(https?:\/\/[^/]+)\/(.+?)\/-\/merge_requests\/(\d+)/;
 const GITLAB_MR_LEGACY_RE = /^(https?:\/\/[^/]+)\/(.+?)\/merge_requests\/(\d+)/;
-const GITHUB_PR_RE = /^https?:\/\/github\.com\/([^/]+)\/([^/]+)\/pull\/(\d+)/;
+const GITHUB_PR_RE = /^https?:\/\/([^/]+)\/([^/]+)\/([^/]+)\/pull\/(\d+)/;
 
 function parseMrUrl(url) {
   if (!url) return null;
 
   const ghMatch = url.match(GITHUB_PR_RE);
-  if (ghMatch) {
-    return { type: 'github', owner: ghMatch[1], repo: ghMatch[2], number: ghMatch[3] };
+  if (ghMatch && githubHosts().has(ghMatch[1])) {
+    return { type: 'github', owner: ghMatch[2], repo: ghMatch[3], number: ghMatch[4] };
   }
 
   const glMatch = url.match(GITLAB_MR_RE) || url.match(GITLAB_MR_LEGACY_RE);
@@ -62,7 +80,7 @@ async function fetchGitlabMrState(host, projectPath, iid, token) {
 }
 
 async function fetchGithubPrState(owner, repo, number, token) {
-  const url = `https://api.github.com/repos/${owner}/${repo}/pulls/${number}`;
+  const url = `${githubApiUrl()}/repos/${owner}/${repo}/pulls/${number}`;
 
   try {
     const headers = { 'User-Agent': 'rhai-org-pulse' };

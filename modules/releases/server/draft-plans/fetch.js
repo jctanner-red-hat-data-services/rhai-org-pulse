@@ -1,5 +1,9 @@
 let _fetch = globalThis.fetch;
 
+// Default GitLab host, overridable per instance in config; GITLAB_BASE_URL
+// is the name the core platform's roster sync already reads.
+const GITLAB_DEFAULT_BASE_URL = process.env.GITLAB_BASE_URL || 'https://gitlab.com';
+
 const DATA_PREFIX = 'releases/draft-plans';
 
 const KNOWN_PRODUCTS = ['RHOAI', 'RHAII'];
@@ -7,7 +11,7 @@ const KNOWN_PRODUCTS = ['RHOAI', 'RHAII'];
 const FILES_TO_FETCH = ['release-plan.json', 'release-health.json'];
 
 const DEFAULT_CONFIG = {
-  gitlabBaseUrl: 'https://gitlab.com',
+  gitlabBaseUrl: GITLAB_DEFAULT_BASE_URL,
   projectId: '81798612',
   branch: 'main',
   refreshIntervalHours: 24,
@@ -16,7 +20,7 @@ const DEFAULT_CONFIG = {
 
 async function fetchDraftPlans(storage, config, token) {
   const {
-    gitlabBaseUrl = 'https://gitlab.com',
+    gitlabBaseUrl = GITLAB_DEFAULT_BASE_URL,
     projectId,
     branch = 'main'
   } = config;

@@ -91,6 +91,11 @@
         "required": false
       },
       {
+        "key": "PACKAGE_ONBOARDING_GITLAB_BASE_URL",
+        "description": "GitLab instance that hosts the package-onboarding project (defaults to GITLAB_BASE_URL, then https://gitlab.com)",
+        "required": false
+      },
+      {
         "key": "PACKAGE_ONBOARDING_GITLAB_TOKEN",
         "description": "GitLab PAT with api scope and Developer access to redhat/rhel-ai/core/package-onboarding, used to trigger the onboarding pipeline. Without it the Epic is still filed and the pipeline is reported as not triggered.",
         "required": false
