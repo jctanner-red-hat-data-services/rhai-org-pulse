@@ -263,6 +263,52 @@ describe('POST /features/bulk', () => {
     expect(payload.errors).toEqual([]);
   });
 
+  it('runs the releases jira-sync handler for created features', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ created: 1, updated: 0, unchanged: 0, stale: 0 }),
+      text: () => Promise.resolve('')
+    });
+    const { router, routes } = createRouter();
+    registerFeatureRoutes(router, makeContext(null));
+
+    await callHandler(routes, 'POST', '/features/bulk', { features: [makeValidBody()] });
+
+    const syncCall = fetchMock.mock.calls.find(call => call[0].includes('/api/admin/'));
+    expect(syncCall[0]).toMatch(/\/api\/admin\/refresh\/handler$/);
+    expect(JSON.parse(syncCall[1].body)).toEqual({ handlerId: 'releases:jira-sync' });
+  });
+
+  it('runs the jira-sync handler when an updated key is stale', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ created: 0, updated: 1, unchanged: 0, stale: 1 }),
+      text: () => Promise.resolve('')
+    });
+    const { router, routes } = createRouter();
+    registerFeatureRoutes(router, makeContext(null));
+
+    await callHandler(routes, 'POST', '/features/bulk', { features: [makeValidBody()] });
+
+    const adminCalls = fetchMock.mock.calls.filter(call => call[0].includes('/api/admin/'));
+    expect(adminCalls).toHaveLength(1);
+  });
+
+  it('does not sync when nothing is created or stale', async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ created: 0, updated: 1, unchanged: 0, stale: 0 }),
+      text: () => Promise.resolve('')
+    });
+    const { router, routes } = createRouter();
+    registerFeatureRoutes(router, makeContext(null));
+
+    await callHandler(routes, 'POST', '/features/bulk', { features: [makeValidBody()] });
+
+    const adminCalls = fetchMock.mock.calls.filter(call => call[0].includes('/api/admin/'));
+    expect(adminCalls).toHaveLength(0);
+  });
+
   it('returns 400 for non-array features', async () => {
     const { router, routes } = createRouter();
     registerFeatureRoutes(router, makeContext(null));

@@ -163,6 +163,39 @@ describe('execution routes', () => {
     })
   })
 
+  describe('POST /ai-review/bulk', () => {
+    const review = {
+      recommendation: 'approve',
+      scores: { total: 8 },
+      reviewedAt: '2026-10-08T03:37:07Z',
+      runId: '20261008-033707'
+    }
+
+    it('reports stale keys and keeps _stale for Jira sync to clear', async () => {
+      const staleStorage = makeStorage({
+        'releases/execution/features/RHAISTRAT-14.json': {
+          key: 'RHAISTRAT-14',
+          _stale: { detectedAt: '2026-10-06T16:45:00Z' },
+          aiReview: { recommendation: 'revise', reviewedAt: '2026-09-29T23:18:00Z' }
+        }
+      })
+      const r = makeRouter()
+      await registerExecutionRoutes(r, { ...context, storage: staleStorage })
+      const handler = r._routes.post['/ai-review/bulk'].at(-1)
+      const res = makeRes()
+
+      await handler({ body: { features: [
+        { key: 'RHAISTRAT-14', aiReview: review },
+        { key: 'RHAISTRAT-15', aiReview: { ...review, runId: '20261008-030443' } }
+      ] } }, res)
+
+      expect(res._json).toMatchObject({ created: 1, updated: 1, stale: 1 })
+      const stored = await staleStorage.readFromStorage('releases/execution/features/RHAISTRAT-14.json')
+      expect(stored.aiReview.runId).toBe('20261008-033707')
+      expect(stored._stale).toBeDefined()
+    })
+  })
+
   describe('POST /config', () => {
     it('saves and loads config round-trip', async () => {
       process.env.GITLAB_TOKEN = 'token'

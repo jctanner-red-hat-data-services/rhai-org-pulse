@@ -66,14 +66,20 @@ async function forwardDeleteToReleases() {
 
 /**
  * Trigger a one-time Jira sync on the releases module.
+ * Runs only the releases jira-sync handler, which ignores its 12h cadence;
+ * refresh-all would apply the cadence and skip it.
  * Fire-and-forget — errors are logged but not surfaced.
  */
 function triggerJiraSync() {
-  const url = 'http://localhost:' + API_PORT + '/api/admin/refresh-all';
+  const url = 'http://localhost:' + API_PORT + '/api/admin/refresh/handler';
   fetch(url, {
     method: 'POST',
     headers: internalHeaders('application/json'),
-    body: JSON.stringify({ handlers: ['jira-sync'] })
+    body: JSON.stringify({ handlerId: 'releases:jira-sync' })
+  }).then(function(resp) {
+    if (!resp.ok) {
+      console.warn('[ai-impact] Post-bulk Jira sync not started (' + resp.status + ')');
+    }
   }).catch(function(err) {
     console.warn('[ai-impact] Post-bulk Jira sync trigger failed:', err.message);
   });
@@ -189,8 +195,9 @@ module.exports = function registerFeatureRoutes(router, context) {
         counts.updated = result.updated || 0;
         counts.unchanged = result.unchanged || 0;
 
-        // Trigger Jira enrichment for newly created features
-        if (counts.created > 0) {
+        // Trigger Jira enrichment for newly created features, and to clear
+        // _stale on keys that were recreated in Jira
+        if (counts.created > 0 || result.stale > 0) {
           triggerJiraSync();
         }
       } catch (err) {

@@ -454,7 +454,7 @@ module.exports = async function registerExecutionRoutes(router, context) {
     }
 
     try {
-      const counts = { created: 0, updated: 0, unchanged: 0, skipped: 0 };
+      const counts = { created: 0, updated: 0, unchanged: 0, skipped: 0, stale: 0 };
       const toWrite = [];
 
       const KEY_RE = /^[A-Z][A-Z0-9]+-\d+$/;
@@ -477,6 +477,10 @@ module.exports = async function registerExecutionRoutes(router, context) {
         );
 
         counts[status]++;
+        // A stale key that receives a review was usually recreated in Jira
+        // (for example after a Jira reset). Only Jira sync may clear _stale,
+        // so report it and let the caller run that sync.
+        if (existing && existing._stale) counts.stale++;
 
         if (status !== 'unchanged') {
           const feature = existing || { key: entry.key, summary: entry.aiReview.title || '' };
