@@ -1705,7 +1705,6 @@ unfinished work locally until its assessments are complete.
 
 **Optional — Traffic Signals (`trafficSignals`):**
 
-
 Heuristic narrative signals for the Feature detail **Traffic Signals** panel (blockers / warnings / flowing). Produced by `feature-traffic` (`deriveTrafficSignals`) or the offline augment script; **not** fetched separately from Jira.
 
 ```json
