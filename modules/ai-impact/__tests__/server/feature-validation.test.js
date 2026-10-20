@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { validateFeature, DIMENSIONS, PRIORITIES, RECOMMENDATIONS } from '../../server/features/validation.js';
+import contract from '../../../../fixtures/ai-impact/strategy-review-architecture-skipped.json';
 
 function makeValidFeature(overrides = {}) {
   return {
@@ -22,6 +23,28 @@ function makeValidFeature(overrides = {}) {
 }
 
 describe('validateFeature', () => {
+  it('accepts an explicit architecture skip without changing numeric approval or dissent', () => {
+    const result = validateFeature(structuredClone(contract.features[0]));
+    expect(result.valid).toBe(true);
+    expect(result.data.recommendation).toBe('approve');
+    expect(result.data.needsAttention).toBe(false);
+    expect(result.data.reviewers).toEqual(contract.features[0].reviewers);
+  });
+
+  it.each(DIMENSIONS)('rejects a provisional %s assessment', dim => {
+    const body = makeValidFeature();
+    body.reviewers[dim] = 'pending';
+    const result = validateFeature(body);
+    expect(result.valid).toBe(false);
+    expect(result.errors.some(error => error.startsWith(`reviewers.${dim} `))).toBe(true);
+  });
+
+  it.each(['feasibility', 'testability', 'scope'])('does not permit skipping %s', dim => {
+    const body = makeValidFeature();
+    body.reviewers[dim] = 'skipped';
+    expect(validateFeature(body).valid).toBe(false);
+  });
+
   it('accepts a valid full feature', () => {
     const result = validateFeature(makeValidFeature());
     expect(result.valid).toBe(true);

@@ -1690,13 +1690,21 @@ AI review scores and metadata pushed by the strat-creator pipeline via the AI Im
 | `approvedBy` | string\|null | Who added the sign-off label |
 | `approvedAt` | string\|null | When the sign-off label was added |
 | `scores` | object | Per-dimension scores (0-2) plus `total` (0-8) |
-| `reviewers` | object | Per-dimension verdicts (`approve\|revise\|reject`) |
+| `reviewers` | object | Per-dimension verdicts (`approve\|revise\|reject`); architecture also permits `skipped` when no assessment was performed |
 | `labels` | string[] | Label snapshot from the AI pipeline push |
 | `reviewedAt` | string | ISO 8601 timestamp of this review |
 | `runId` | string | Pipeline run identifier |
 | `history` | array | Previous review snapshots (max 20, newest first) |
 
+The overall `recommendation` and `needsAttention` come from the pipeline's
+numeric gate. Individual reviewer verdicts may disagree. An architecture
+`skipped` value records the absence of an assessment and does not imply approval
+or change that numeric decision. `pending` is provisional and is rejected by
+the completed feature-review API in every dimension. Publishers must retain
+unfinished work locally until its assessments are complete.
+
 **Optional — Traffic Signals (`trafficSignals`):**
+
 
 Heuristic narrative signals for the Feature detail **Traffic Signals** panel (blockers / warnings / flowing). Produced by `feature-traffic` (`deriveTrafficSignals`) or the offline augment script; **not** fetched separately from Jira.
 

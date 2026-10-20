@@ -9,6 +9,7 @@ vi.mock('fs', () => ({
 }));
 
 import registerFeatureRoutes from '../../server/features/routes.js';
+import contract from '../../../../fixtures/ai-impact/strategy-review-architecture-skipped.json';
 
 function makeValidBody() {
   return {
@@ -241,6 +242,18 @@ describe('PUT /features/:key', () => {
 });
 
 describe('POST /features/bulk', () => {
+  it('forwards the completed strategy contract with architecture skip and dissent intact', async () => {
+    const { router, routes } = createRouter();
+    registerFeatureRoutes(router, makeContext(null));
+    const { res } = await callHandler(routes, 'POST', '/features/bulk', structuredClone(contract));
+    expect(res.json.mock.calls[0][0].errors).toEqual([]);
+    const [, options] = fetchMock.mock.calls.find(([url]) => url.includes('/ai-review/bulk'));
+    const sent = JSON.parse(options.body).features[0];
+    expect(sent.aiReview.reviewers).toEqual(contract.features[0].reviewers);
+    expect(sent.aiReview.recommendation).toBe('approve');
+    expect(sent.aiReview.needsAttention).toBe(false);
+  });
+
   it('forwards valid features to releases', async () => {
     fetchMock.mockResolvedValue({
       ok: true,

@@ -113,8 +113,11 @@ function validateFeature(body) {
     errors.push('reviewers must be an object with keys: ' + DIMENSIONS.join(', '));
   } else {
     for (const dim of DIMENSIONS) {
-      if (!RECOMMENDATIONS.includes(body.reviewers[dim])) {
-        errors.push(`reviewers.${dim} must be one of: ${RECOMMENDATIONS.join(', ')}`);
+      // A missing architecture assessment is explicit, never an approval.
+      // Pending scores are provisional and cannot represent a completed review.
+      const allowed = dim === 'architecture' ? [...RECOMMENDATIONS, 'skipped'] : RECOMMENDATIONS;
+      if (!allowed.includes(body.reviewers[dim])) {
+        errors.push(`reviewers.${dim} must be one of: ${allowed.join(', ')}`);
       }
     }
   }
